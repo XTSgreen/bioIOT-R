@@ -1,81 +1,165 @@
-# bioIOT (R)
+<h1 align="center">bioIOT <span style="font-size:60%">(R)</span></h1>
 
-**即插即用**的单细胞时序/拟时序分析包：半松弛逆最优传输（IOT）核心求解器 + 状态转移矩阵 + 随机游走 pseudotime + ggplot2 可视化 + Seurat/SingleCellExperiment 接口 + 批量队列通路工具。核心数值与论文求解器同源。
+<p align="center">
+  <b>Inverse optimal transport for single-cell state transitions and pseudotime</b>
+</p>
 
-## 安装
+<p align="center">
+  <a href="https://github.com/XTSgreen/bioIOT-R/actions/workflows/ci.yml"><img src="https://github.com/XTSgreen/bioIOT-R/actions/workflows/ci.yml/badge.svg" alt="R-CMD-check"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+</p>
+
+---
+
+<p align="center"><a href="README.md"><b>English</b></a> | <a href="README.zh-CN.md">简体中文</a></p>
+
+**bioIOT** is an R implementation of semi-relaxed inverse optimal transport
+(IOT) for single-cell trajectory analysis. Given state-transition features,
+source/target state masses and observed transitions, it learns feature
+weights θ such that the soft-marginal OT plan induced by the linear cost
+`C = -einsum(φ, θ)` reproduces the data — and turns the fit into state
+transition matrices, random-walk pseudotime and ggplot2 visualisation.
+
+The solver was developed and validated as part of a research project on
+treatment-resistance state transitions, and is packaged here for general
+use.
+
+## Why bioIOT?
+
+- **Identifiable by construction.** Hard-marginal OT makes pure column
+  features unidentifiable; bioIOT's KL-soft column anchoring restores
+  identifiability while preserving the target-composition constraint.
+- **Exact implicit gradients.** Anderson-accelerated fixed-point solve in
+  the forward pass; the implicit function theorem in the backward pass —
+  numerically stable where unrolled backpropagation diverges.
+- **Self-contained.** The solver is pure base R; the only runtime dependency
+  beyond it is ggplot2. Seurat / SingleCellExperiment are soft-gated.
+- **End-to-end.** Cell embedding in, transition matrix + pseudotime + plots
+  out.
+
+## Installation
 
 ```r
-install.packages("packages/bioIOT-R", repos = NULL, type = "source")
-# 或 R CMD build packages/bioIOT-R && install.packages("bioIOT_0.2.0.tar.gz", repos = NULL)
+# from GitHub
+remotes::install_github("XTSgreen/bioIOT-R")
 ```
 
-运行时仅依赖 `ggplot2`；Seurat/SingleCellExperiment 为软门控（装了才启用对应方法）。
+<details>
+<summary>From a local clone</summary>
 
-## 60 秒上手
+```r
+install.packages(".", repos = NULL, type = "source")
+# or: R CMD build . && install.packages("bioIOT_0.2.0.tar.gz", repos = NULL)
+```
+
+</details>
+
+## Quick start
 
 ```r
 library(bioIOT)
 
-# 1) 一行生成可复现合成数据（含真值；或用自带数据 data(demo_iot_states)）
-sim <- simulate_iot_states(K = 6, seed = 1)
+# 1) A reproducible synthetic dataset with ground truth
+sim <- simulate_iot_states(K = 6, seed = 1)   # or data(demo_iot_states)
 
-# 2) 拟合特征权重（隐式微分梯度 + 两阶段去偏 + 多重启）
-fit <- fit_iot(sim$phi, sim$a, sim$b, sim$T_true, n_restart = 2, epochs = 150)
+# 2) Fit feature weights: exact implicit gradients + two-stage debias +
+#    multi-restart. Scenarios may differ in the number of states.
+fit <- fit_iot(sim$phi, sim$a, sim$b, sim$T_true, n_restart = 2)
 fit; summary(fit)
 
-# 3) 状态转移矩阵 + 随机游走 pseudotime
-Q <- transition_matrix(fit)
-pt <- pseudotime_from_transition(Q, root = "S1")
+# 3) Trajectory layer
+Q  <- transition_matrix(fit)                        # (K, K) transitions
+pt <- pseudotime_from_transition(Q, root = "S1")    # random-walk pseudotime
 
-# 4) 可视化
-plot_transition_heatmap(Q)                     # 转移热图
-plot_transition_flow(Q, sim$embedding)         # CellRank 风格流箭头
-plot_theta(fit)                                # 特征权重条形图
+# 4) Visualisation
+plot_transition_heatmap(Q)                          # annotated heatmap
+plot_transition_flow(Q, sim$embedding)              # CellRank-style arrows
+plot_theta(fit)                                     # weights + support
 
-# 5) 直接跑单细胞对象（无 T_obs 用等权解 plan；有 T_obs（如谱系数据）先拟合）
+# 5) Straight from cell-level objects
 res <- runIOT(sim$cell_embedding, sim$cell_state,
               from = sim$cell_time == "t0", to = sim$cell_time == "t1",
               root = "S1")
-res$Q; res$pseudotime
-# SingleCellExperiment: runIOT(sce, state_col = "state", time_col = "time", from = "t0", to = "t1")
-# Seurat: runIOT(obj, group.by = "state", split.by = "time", from = "t0", to = "t1")
+# SingleCellExperiment: runIOT(sce, state_col = "state", time_col = "time",
+#                              from = "t0", to = "t1", dimred = "PCA")
+# Seurat: runIOT(obj, group.by = "state", split.by = "time",
+#                 from = "t0", to = "t1", reduction = "pca")
 ```
 
-底层函数式 API（与论文记号一一对应）：`soft_sinkhorn()`、`make_cost()`、`row_ce_loss()`、`zscore_phi()`、`build_state_features()`。
+Without observed transitions `T_obs`, `runIOT()` solves the plan with
+uniform feature weights; with `T_obs` (e.g. from lineage or clone data) it
+fits the weights first.
 
-## 批量队列工具
+## Showcase: HSMM differentiation (real public data)
 
-```r
-pw <- score_pathways(expr_gene)                       # 8 维 IOT 通路打分
-plot_pathway_trend(pw, time = pseudotime)             # 通路轨迹
-expr_gene <- collapse_probes(expr, probe_id, gene_id) # 探针折叠
-gsm <- gsm_id(cel_files)                              # CEL 文件名 -> GSM
-has_cel_file("GSE62254_RAW.tar")                      # RAW tar 体检
-```
+The [`showcase/`](showcase/) directory runs the full pipeline on the human
+skeletal-muscle myoblast time course (HSMMSingleCell, 271 cells × 47k genes,
+0/24/48/72 h; Shin et al. 2015) and benchmarks it against Slingshot:
 
-## 内容总览
-
-| 层 | 函数 |
+| Pseudotime metric (Spearman) | value |
 |---|---|
-| 核心求解 | `soft_sinkhorn`, `row_conditional`, `make_cost`, `row_ce_loss`, `zscore_phi` |
-| 拟合 | `fit_iot`（print/summary 方法） |
-| 轨迹 | `transition_matrix`, `pseudotime_from_transition`, `build_state_features` |
-| 单细胞接口 | `runIOT`（matrix / SingleCellExperiment / Seurat） |
-| 可视化 | `plot_transition_heatmap`, `plot_transition_flow`, `plot_theta`, `plot_pathway_trend` |
-| 数据 | `simulate_iot_states`, `demo_iot_states` |
-| 批量队列 | `pathway_markers`, `score_pathways`, `collapse_probes`, `gsm_id`, `has_cel_file` |
+| bioIOT pseudotime ~ known Hours (cells) | 0.251 |
+| Slingshot pseudotime ~ known Hours (cells) | 0.253 |
+| bioIOT state pseudotime ~ Slingshot state pseudotime | 0.600 |
 
-## 质量
+With 30 cells of sampling noise per state, `fit_iot` recovers the true
+transition matrix ~3× more accurately than the raw noisy transitions
+(mean per-row L1 0.013 vs 0.039; 50 replicates). Provenance and licensing of
+all showcase data are documented in
+[`showcase/LICENSE_AUDIT.md`](showcase/LICENSE_AUDIT.md).
 
-- testthat 测试 **84 项全通过**（含隐式梯度 vs 有限差分、θ 恢复、SCE/Seurat 集成）
-- `R CMD check --as-cran`：**0 错误 / 1 环境警告（本机缺 qpdf）/ 2 环境性 NOTE**（新提交声明、本机缺 pandoc）
-- vignette（Sweave，无需 pandoc）
+## API overview
 
-## 测试与检查
+| Layer | Functions |
+|---|---|
+| Core solver | `soft_sinkhorn()`, `row_conditional()`, `make_cost()`, `row_ce_loss()`, `zscore_phi()` |
+| Fitting | `fit_iot()` (with `print`/`summary` methods) |
+| Trajectory | `transition_matrix()`, `pseudotime_from_transition()`, `build_state_features()` |
+| Single-cell | `runIOT()` — matrix / SingleCellExperiment / Seurat |
+| Visualisation | `plot_transition_heatmap()`, `plot_transition_flow()`, `plot_theta()`, `plot_pathway_trend()` |
+| Demo data | `simulate_iot_states()`, `demo_iot_states` |
+| Bulk cohorts | `pathway_markers`, `score_pathways()`, `collapse_probes()`, `gsm_id()` |
+
+## How it works
+
+bioIOT solves
+
+```text
+min_P  <C, P> − eps·H(P) + mu·KL(col(P) ‖ b)    s.t.  P·1 = a
+```
+
+with a hard source-side row marginal and a KL-anchored column marginal:
+
+- `mu → ∞` recovers hard-marginal OT (pure column features unidentifiable);
+- `mu → 0` recovers a plain row-softmax (no target-composition anchoring);
+- finite `mu` interpolates the two — the paper's working point is
+  `mu = 0.5, eps = 1.0, lam = 0.05`.
+
+A vignette is bundled with the package
+(`browseVignettes("bioIOT")` after installation).
+
+## Testing
 
 ```r
-R CMD build packages/bioIOT-R
-R CMD check --as-cran bioIOT_0.2.0.tar.gz
-# 或直接跑测试
-Rscript -e "library(testthat); library(bioIOT); test_dir('packages/bioIOT-R/tests/testthat')"
+library(testthat); library(bioIOT)
+test_dir("tests/testthat")   # from the repository root
 ```
+
+## Citation
+
+If you use bioIOT, please cite:
+
+```bibtex
+@misc{dong2026bioiotr,
+  author       = {Dong, Han},
+  title        = {bioIOT: Inverse Optimal Transport for Single-Cell
+                  Trajectory Analysis},
+  year         = {2026},
+  howpublished = {\url{https://github.com/XTSgreen/bioIOT-R}},
+  note         = {R package version 0.2.0}
+}
+```
+
+## License
+
+[MIT](LICENSE) © 2026 Han Dong (XTSgreen)
