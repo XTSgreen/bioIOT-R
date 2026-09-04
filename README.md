@@ -11,7 +11,7 @@
 
 ---
 
-<p align="center"><a href="README.md"><b>English</b></a> | <a href="README.zh-CN.md">简体中文</a></p>
+<p align="center"><a href="README.md"><b>English</b></a> | <a href="https://github.com/XTSgreen/bioIOT-R/blob/main/README.zh-CN.md">简体中文</a></p>
 
 **bioIOT** is an R implementation of semi-relaxed inverse optimal transport
 (IOT) for single-cell trajectory analysis. Given state-transition features,

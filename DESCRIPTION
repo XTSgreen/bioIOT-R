@@ -1,7 +1,7 @@
 Package: bioIOT
 Type: Package
 Title: Inverse Optimal Transport for Single-Cell Trajectory Analysis
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: person(given = "Han", family = "Dong", role = c("aut", "cre"),
     email = "dh411424@163.com", comment = c(Nickname = "XTSgreen"))
 Description: Semi-relaxed inverse optimal transport ('IOT') for single-cell
