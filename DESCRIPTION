@@ -4,11 +4,11 @@ Title: Inverse Optimal Transport for Single-Cell Trajectory Analysis
 Version: 0.2.0
 Authors@R: person(given = "Han", family = "Dong", role = c("aut", "cre"),
     email = "dh411424@163.com", comment = c(Nickname = "XTSgreen"))
-Description: Semi-relaxed inverse optimal transport (IOT) for single-cell
+Description: Semi-relaxed inverse optimal transport ('IOT') for single-cell
     state-transition and pseudotime analysis: a self-contained R solver
-    (Anderson-accelerated soft Sinkhorn with exact implicit gradients),
-    feature-weight fitting with two-stage debiasing and multi-restart,
-    state transition matrices, random-walk pseudotime, ggplot2
+    (Anderson-accelerated soft 'Sinkhorn' with exact implicit gradients),
+    feature-weight fitting with two-stage de-biasing and multi-restart,
+    state transition matrices, random-walk pseudotime, 'ggplot2'
     visualisation, soft-gated Seurat and SingleCellExperiment interfaces,
     reproducible simulated demo data, and bulk-cohort pathway scoring
     utilities.

@@ -28,7 +28,7 @@ normalized \code{a}. \code{row_conditional}: (K, K) matrix; rows with
 \description{
 \code{soft_sinkhorn} solves the row-marginal-hard / column-marginal-KL-soft
 problem
-\eqn{\min_P <C,P> - \eps H(P) + \mu KL(col(P) || b)} subject to
+\eqn{\min_P \langle C, P \rangle - \epsilon H(P) + \mu\, KL(col(P) \| b)} subject to
 \eqn{P 1 = a}, via Anderson-accelerated damped fixed-point iteration.
 \code{row_conditional} returns \eqn{Q(i,\cdot) = P(i,\cdot) / a_i}.
 }

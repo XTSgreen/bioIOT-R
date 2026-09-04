@@ -24,6 +24,8 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
       - uses: r-lib/actions/setup-tinytex@v2
+      - name: Install LaTeX packages needed by Sweave
+        run: tlmgr install grfext infwarerr kvdefinekeys kvoptions pdftexcmds
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
