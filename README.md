@@ -92,7 +92,8 @@ fits the weights first.
 
 ## Showcase: HSMM differentiation (real public data)
 
-The [`showcase/`](showcase/) directory runs the full pipeline on the human
+The [showcase directory](https://github.com/XTSgreen/bioIOT-R/tree/main/showcase)
+runs the full pipeline on the human
 skeletal-muscle myoblast time course (HSMMSingleCell, 271 cells × 47k genes,
 0/24/48/72 h; Shin et al. 2015) and benchmarks it against Slingshot:
 
@@ -106,7 +107,7 @@ With 30 cells of sampling noise per state, `fit_iot` recovers the true
 transition matrix ~3× more accurately than the raw noisy transitions
 (mean per-row L1 0.013 vs 0.039; 50 replicates). Provenance and licensing of
 all showcase data are documented in
-[`showcase/LICENSE_AUDIT.md`](showcase/LICENSE_AUDIT.md).
+[showcase/LICENSE_AUDIT.md](https://github.com/XTSgreen/bioIOT-R/blob/main/showcase/LICENSE_AUDIT.md).
 
 ## API overview
 

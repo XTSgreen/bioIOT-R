@@ -4,4 +4,6 @@
 ^README\.Rmd$
 ^cran-comments\.md$
 ^\.git$
+^\.github$
 ^showcase$
+^README\.zh-CN\.md$
