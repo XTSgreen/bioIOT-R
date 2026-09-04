@@ -1,0 +1,16 @@
+citHeader("To cite bioIOT in publications use:")
+
+bibentry(
+  bibtype = "Misc",
+  title = "bioIOT: Inverse Optimal Transport for Single-Cell Trajectory Analysis",
+  author = person(given = "Han", family = "Dong", email = "dh411424@163.com",
+                  comment = c(Nickname = "XTSgreen")),
+  year = "2026",
+  note = "R package version 0.2.0",
+  url = "https://github.com/XTSgreen/bioIOT-R",
+  textVersion = paste(
+    "Han Dong (2026).",
+    "bioIOT: Inverse Optimal Transport for Single-Cell Trajectory Analysis.",
+    "R package version 0.2.0."
+  )
+)

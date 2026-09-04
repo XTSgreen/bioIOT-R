@@ -1,0 +1,24 @@
+Package: bioIOT
+Type: Package
+Title: Inverse Optimal Transport for Single-Cell Trajectory Analysis
+Version: 0.2.0
+Authors@R: person(given = "Han", family = "Dong", role = c("aut", "cre"),
+    email = "dh411424@163.com", comment = c(Nickname = "XTSgreen"))
+Description: Semi-relaxed inverse optimal transport (IOT) for single-cell
+    state-transition and pseudotime analysis: a self-contained R solver
+    (Anderson-accelerated soft Sinkhorn with exact implicit gradients),
+    feature-weight fitting with two-stage debiasing and multi-restart,
+    state transition matrices, random-walk pseudotime, ggplot2
+    visualisation, soft-gated Seurat and SingleCellExperiment interfaces,
+    reproducible simulated demo data, and bulk-cohort pathway scoring
+    utilities.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.0.0)
+Imports: utils, ggplot2
+Suggests: testthat (>= 3.0.0), knitr, rmarkdown, SingleCellExperiment,
+    Seurat, SummarizedExperiment, S4Vectors
+URL: https://github.com/XTSgreen/bioIOT-R
+BugReports: https://github.com/XTSgreen/bioIOT-R/issues
+VignetteBuilder: knitr
+Config/testthat/edition: 3

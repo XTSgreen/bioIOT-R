@@ -1,0 +1,4 @@
+"metric","spearman"
+"bioIOT pseudotime ~ Hours (cells)",0.251177686269999
+"slingshot pseudotime ~ Hours (cells)",0.253201999277734
+"bioIOT state pt ~ slingshot state pt",0.6

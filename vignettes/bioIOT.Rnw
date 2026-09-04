@@ -1,0 +1,105 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\title{bioIOT: inverse optimal transport for single-cell state transitions}
+\author{bioIOT package}
+\date{bioIOT version 0.2.0}
+
+%\VignetteIndexEntry{bioIOT quickstart}
+%\VignetteEngine{utils::Sweave}
+%\VignetteEncoding{UTF-8}
+
+\begin{document}
+\maketitle
+
+bioIOT solves the semi-relaxed inverse optimal transport (IOT) problem: it
+finds feature weights $\theta$ such that the soft-marginal OT plan induced
+by the linear cost $C = -\mathrm{einsum}(\phi, \theta)$ reproduces observed
+state transitions, then turns the plan into transition matrices, flow plots
+and pseudotime.
+
+\section{A reproducible demo in one line}
+
+\texttt{simulate\_iot\_states()} generates a synthetic single-cell-like
+dataset with a known ground truth (states, masses, true plan and
+transitions, cell-level metadata). The same dataset ships pre-computed as
+\texttt{demo\_iot\_states}.
+
+<<setup>>=
+library(bioIOT)
+set.seed(1)
+sim <- simulate_iot_states(K = 6, seed = 1)
+names(sim)
+@
+
+\section{Fit feature weights}
+
+\texttt{fit\_iot()} runs two-stage (l1 selection then debias refit)
+multi-restart fitting with exact implicit gradients.
+
+<<fit>>=
+fit <- fit_iot(sim$phi, sim$a, sim$b, sim$T_true,
+               n_restart = 2, epochs = 150, seed = 1)
+fit
+summary(fit)
+@
+
+\section{Transition matrix and pseudotime}
+
+\texttt{transition\_matrix()} re-solves the plan at the fitted weights;
+\texttt{pseudotime\_from\_transition()} converts it into random-walk
+pseudotime (expected hitting times to the root state).
+
+<<transitions>>=
+Q <- transition_matrix(fit)
+round(Q, 2)
+pseudotime_from_transition(Q, root = "S1")
+@
+
+\section{Visualisation}
+
+<<heatmap, fig=TRUE, width=6, height=5>>=
+plot_transition_heatmap(Q)
+@
+
+<<flow, fig=TRUE, width=6, height=5>>=
+plot_transition_flow(Q, sim$embedding, threshold = 0.04)
+@
+
+<<theta, fig=TRUE, width=6, height=4>>=
+plot_theta(fit)
+@
+
+\section{Single-cell interface}
+
+\texttt{runIOT()} works directly on cell-level inputs (base matrix,
+SingleCellExperiment or Seurat). Without observed transitions
+\texttt{T\_obs} it solves the plan with uniform feature weights; with
+\texttt{T\_obs} (e.g.\ from lineage/clone data) it fits the weights first.
+
+<<matrix>>=
+res <- runIOT(sim$cell_embedding, sim$cell_state,
+              from = sim$cell_time == "t0", to = sim$cell_time == "t1",
+              root = "S1")
+round(res$Q[1:3, 1:3], 2)
+res$pseudotime
+@
+
+\section{Bulk pathway utilities}
+
+The package also ships the paper's bulk-cohort pathway tools:
+8-dimensional marker scoring (\texttt{score\_pathways}),
+probe-to-gene collapse (\texttt{collapse\_probes}) and trajectory plots.
+
+<<bulk, fig=TRUE, width=6, height=4>>=
+expr <- matrix(rnorm(200 * 12), nrow = 200)
+rownames(expr) <- paste0("G", 1:200)
+colnames(expr) <- paste0("S", 1:12)
+rownames(expr)[1] <- "VIM"
+rownames(expr)[2] <- "CDH2"
+rownames(expr)[3] <- "MKI67"
+pw <- score_pathways(expr)
+print(plot_pathway_trend(pw, time = sort(runif(12))))
+@
+
+\end{document}

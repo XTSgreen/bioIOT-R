@@ -1,0 +1,8 @@
+bioIOT.Rcheck/
+*.tar.gz
+.Rhistory
+.RData
+*.Rproj
+.Rproj.user/
+.github/
+
